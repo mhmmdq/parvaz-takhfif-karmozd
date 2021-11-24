@@ -4,46 +4,40 @@ Plugin Name: پرواز - افزونه تخفیف از روی کارمزد
 Plugin URI: https://github.com/mhmmdq/parvaz-takhfif-karmozd
 Description: افزونه ای برای کسر کد تخفیف از کمیسیون مدیر به جای مبلغ کل
 Author: Mhmmdq
-Version: 0.1.0
+Version: 0.1.1
 Author URI: https://github.com/mhmmdq
 */
 if (!defined('ABSPATH'))
   exit;
 
-add_action( 'woocommerce_before_calculate_totals', 'adjust_cart_coupon', 10, 1);
 
-function adjust_cart_coupon( $cart_object ) {
-    global $woocommerce;
+include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+ 
 
-    if ( is_admin() && ! defined( 'DOING_AJAX' ) ){
-      return;
-    }
+if ( is_plugin_active( 'woocommerce/woocommerce.php' ) ) 
+{
 
-    if ($coupons = WC()->cart->get_applied_coupons()  == False ) {
-        $coupon = False;
-    } else {
-      foreach ( WC()->cart->get_applied_coupons() as $code ) {
-        
-          $coupon = new WC_Coupon( $code );
-          $discount_type = $coupon->get_discount_type(); // Get coupon discount type
-          $coupon_amount = $coupon->get_amount(); // Get coupon amount
-          
-      }
-    }
+  if(is_plugin_active( 'dokan-lite/dokan.php' )) 
+  { 
 
-    if($coupon !== false) {
-      foreach ( $cart_object->get_cart() as $cart_item )
-      {
-        $commission =  dokan()->commission->get_earning_by_product( $cart_item['product_id'], 'admin' );
-        $price = $cart_item['data']->regular_price;
-        if($discount_type == 'percent') {
-          $price = $price - (($commission * $coupon_amount)/100);
-        }else {
-          $price = $price - ($commission - $coupon_amount);
-        }
-        $cart_item['data']->set_price( $price );
-      }
-
-    }
-
+      include 'inc/class-coupon-code-dokan.php';
+      new PARVAZ_CCD();
   }
+  else
+  {
+    add_action('admin_notices' , function() {
+      $message = 'افزونه تخفیف از روی کارمزد برای کارکرد نیاز مند نصب و فعال سازی دکان را دارد';
+      $html_message = sprintf( '<div class="notice notice-error" style="padding:10px;"> %s </div>', $message);
+      echo $html_message; 
+    });
+  }
+
+}
+else
+{
+  add_action('admin_notices' , function() {
+    $message = 'افزونه تخفیف از روی کارمزد برای کارکرد نیاز مند نصب و فعال سازی ووکامرس را دارد';
+    $html_message = sprintf( '<div class="notice notice-error" style="padding:10px;"> %s </div>', $message);
+    echo $html_message; 
+  });
+}
